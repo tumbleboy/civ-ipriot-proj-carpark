@@ -4,7 +4,7 @@ import datetime
 from random import uniform
 import json
 import time
-
+import threading
 
 class CarPark:
     def __init__(self, config):
@@ -23,8 +23,9 @@ class CarPark:
 
         # Initialize default values on the display
         self.publish_data()
+        # self.publish_temperature()
 
-        self.mqtt_client.loop_forever()
+        self.mqtt_client.loop_start()
 
     def publish_data(self):
         # Simulate Temperature
@@ -86,7 +87,22 @@ class CarPark:
         elif message == 'exit':
             self.detect_car_exit()
 
+    def publish_temperature_time(self):
+        while True:
+            temperature_time = {'temperature': uniform(15, 30),
+                                'time': datetime.datetime.now().strftime("%H:%M:%S")}
+            message = json.dumps(temperature_time)
+            self.mqtt_client.publish('carpark/temperature', message)
+
+            # Use threading to not block the program
+            event = threading.Event()
+
+            # Wait 6 seconds to simulate time and weather change
+            event.wait(6)
+
 
 if __name__ == '__main__':
     config = parse_config()
     parking_lot = CarPark(config)
+    parking_lot.publish_temperature_time()
+    parking_lot.mqtt_client.loop_stop()

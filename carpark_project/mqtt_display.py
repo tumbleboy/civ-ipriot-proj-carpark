@@ -72,9 +72,14 @@ class CarParkDisplay:
     def __init__(self):
         self.temperature = 0
         self.available_bays = 0
-        self.datetime = 0
+        self.time = 0
         self.mqtt_client = create_mqtt_client('Carpark Display')
+
+        # Listen for car updates
         self.mqtt_client.on_message = self.on_message_callback
+
+        # Listen for temp and time updates
+        self.mqtt_client.message_callback_add('carpark/temperature', self.on_message_temperature_time)
 
         self.window = WindowedDisplay(
             'Moondalup', CarParkDisplay.fields)
@@ -83,18 +88,26 @@ class CarParkDisplay:
         updater.start()
         self.window.show()
 
+    # Method to update car bays
     def on_message_callback(self, client, userdata, msg):
         message = msg.payload.decode()
         # Convert incoming JSON into dictionary
         json_data = json.loads(message)
-
-        # Set attributes to current status
-        self.temperature = json_data['temperature']  # You can access keys from the dictionary now
+        # Update number of bays
         self.available_bays = json_data['available_spaces']
-        self.datetime = json_data['datetime']
+
+    # Method to update temperature and time
+    def on_message_temperature_time(self, client, userdata, msg):
+        message = msg.payload.decode()
+        message = json.loads(message)
+        self.temperature = message['temperature']
+        self.time = message['time']
+        print(message)
 
     def check_updates(self):
+        self.mqtt_client.subscribe('carpark/temperature')
         self.mqtt_client.subscribe('carpark')
+
         self.mqtt_client.loop_start()
         while True:
             # If there are bays available
@@ -104,7 +117,7 @@ class CarParkDisplay:
                 field_values = dict(zip(CarParkDisplay.fields, [
                     self.available_bays,
                     f"{int(self.temperature)}C°",  # Convert incoming float to int
-                    self.datetime]))
+                    self.time]))
 
                 # When you get an update, refresh the display.
                 self.window.update(field_values)
@@ -114,8 +127,8 @@ class CarParkDisplay:
                 # NOTE: Dictionary keys *must* be the same as the class fields
                 field_values = dict(zip(CarParkDisplay.fields, [
                     "FULL",
-                    f"{int ( self.temperature )}C°",
-                    self.datetime]))
+                    f"{int(self.temperature)}C°",
+                    self.time]))
 
                 # When you get an update, refresh the display.
                 self.window.update(field_values)
