@@ -160,3 +160,13 @@ cython_debug/
 #.idea/
 .vscode/
 .idea/
+
+# Personal stuff
+docs
+mqtt_ady_live_session_setup
+samples_and_snippets
+smartpark
+.gitattributes
+LICENSE
+requirements.txt
+setup.py
