@@ -1,0 +1,13 @@
+[broker]
+host = "localhost"
+port = 1883
+keep_alive = 300
+
+[carpark]
+total_spaces = 180
+name = "Moondalup Parking Lot"
+location = "Moondalup"
+
+[topics]
+sensor = "sensor"
+carpark = "carpark"
