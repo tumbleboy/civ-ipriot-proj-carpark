@@ -13,8 +13,10 @@ class CarPark:
         self.total_cars = 0
         self.total_spaces = config['carpark']['total_spaces']
 
-        # Begin with the number of available spaces to be the total spaces
+        # Set all spaces to be available
         self.available_spaces = self.total_spaces
+
+        # Create mqtt client
         self.mqtt_client = create_mqtt_client(config['carpark']['name'])
         self.mqtt_client.on_message = self.on_message_callback
         self.mqtt_client.subscribe('sensor')
@@ -25,19 +27,27 @@ class CarPark:
         self.mqtt_client.loop_forever()
 
     def publish_data(self):
+        # Simulate Temperature
         temperature = uniform(15, 35)
+
+        # Capture the current time of entry/exit
         now = datetime.datetime.now().strftime("%H:%M:%S")
+
+        # Create dictionary of current data
         message_data = {
             "temperature": temperature,
             "datetime": now,
             "available_spaces": self.available_spaces
 
         }
-        # convert the message_data dictionary into json string
+
+        # convert the message_data dictionary into json string, then publish to MQTT
         message_to_send = json.dumps(message_data)
         self.mqtt_client.publish('carpark', message_to_send)
 
     def detect_car_entry(self):
+
+        # If there are spaces left
         if self.available_spaces != 0:
             self.total_cars += 1
             self.available_spaces -= 1
@@ -45,12 +55,14 @@ class CarPark:
             print(f"Total cars: {self.total_cars}")
             print(f"Bays left: {self.available_spaces}")
             print("-----------------------")
-            # Publish the amount of bays left.
+            # Publish the amount of bays left to MQTT.
             self.publish_data()
         else:
+            # No spaces left
             print("There are no more bays!")
 
     def detect_car_exit(self):
+        # If there are still cars left
         if self.total_cars != 0:
             self.total_cars -= 1
             self.available_spaces += 1
@@ -61,6 +73,7 @@ class CarPark:
             # Publish the amount of bays left.
             self.publish_data()
         else:
+            # No cars left
             print("There are no cars left in the carpark!")
 
     def on_message_callback(self, client, userdata, msg):

@@ -85,30 +85,38 @@ class CarParkDisplay:
 
     def on_message_callback(self, client, userdata, msg):
         message = msg.payload.decode()
+        # Convert incoming JSON into dictionary
         json_data = json.loads(message)
+
+        # Set attributes to current status
         self.temperature = json_data['temperature']  # You can access keys from the dictionary now
         self.available_bays = json_data['available_spaces']
         self.datetime = json_data['datetime']
 
     def check_updates(self):
-        # TODO: This is where you should manage the MQTT subscription
         self.mqtt_client.subscribe('carpark')
         self.mqtt_client.loop_start()
         while True:
+            # If there are bays available
             if self.available_bays != 0:
+
                 # NOTE: Dictionary keys *must* be the same as the class fields
                 field_values = dict(zip(CarParkDisplay.fields, [
                     self.available_bays,
-                    f"{int(self.temperature)}C°",
+                    f"{int(self.temperature)}C°",  # Convert incoming float to int
                     self.datetime]))
-            # When you get an update, refresh the display.
+
+                # When you get an update, refresh the display.
                 self.window.update(field_values)
-            else:
+
+            else:  # If there are no bays available
+
                 # NOTE: Dictionary keys *must* be the same as the class fields
                 field_values = dict(zip(CarParkDisplay.fields, [
                     "FULL",
                     f"{int ( self.temperature )}C°",
                     self.datetime]))
+
                 # When you get an update, refresh the display.
                 self.window.update(field_values)
 
